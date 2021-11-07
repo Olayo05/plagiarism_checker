@@ -1,2 +1,2 @@
-# plagiarism_checker
+# Plagiarism Checker
 Trabajo de clase 

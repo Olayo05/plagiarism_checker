@@ -1,0 +1,24 @@
+---
+title: "Trabajo Plagio Master"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Portada
+
+# Indice
+
+# Introducción y motivación
+
+# Teoria
+## Preprocesado   
+## Tokenizado
+## Metricas y modelos
+## Evaluación de los resultados
+
+# Caso prático

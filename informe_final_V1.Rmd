@@ -16,8 +16,112 @@ knitr::opts_chunk$set(echo = TRUE)
 # Introducción y motivación
 
 # Teoria
+
+
+En este apartado desarrollamos los conceptos y técnicas necesarias para llevar a cabo más tarde en un caso práctico la construcción de un detector de plagio. Esta teoría esta subdividida en los diferentes pasos a seguir en la práctica para el tratado de los datos y la construcción y evaluación del modelo.
+
+?? poner una clasificacion de los tipos de detectore de plagio o algo...
+
+
+
 ## Preprocesado   
+
+
+El preporcesado es el primer contacto con los datos, las primeras tareas de limpieza y formateo de los datos suelen ser por lo general sencillas y en su mayoría genéricas. 
+
+Primero exponemos las funciones básicas para este propósito:
+```{r}
+#Carga de datos como texto plano
+library(readr)
+library(stringr)
+
+texto<-paste(readLines("../delfin.txt"),collapse=" ")
+#elimilar los espacios en blanco al comienzo y al final del string
+texto<-str_trim(texto)
+#pasarlo a minúsculas
+texto<-tolower(texto) 
+#tolower() es de la libreria base, pero str_to_lower() 
+#función de la librería stringr es otra alternativa
+texto
+
+#eliminar signos de puntuación, carácteres problemáticos
+texto<-gsub("[[:punct:]]"," ",texto)
+texto<-gsub("(\\n)|(\\t)"," ",texto)
+texto
+
+#y comprobar que no hay espacios repetidos
+
+
+texto<-gsub("\\s+"," ",str_trim(texto))
+#la función str_squish() de la librería stringr hace exactamente 
+#lo mismo que la función anterior
+
+```
+
+En el caso de que el idioma tenga acentuación, sería recomendable eliminarla para no tener problemas de formato ni considerar diferentes palabras iguales solo por no estar acentuada o no esto lo podemos hacer de forma sencilla usando stringi::stri_trans_general()
+```{r}
+
+texto<-stringi::stri_trans_general(texto,"Latin-ASCII") # este proceso será muy dependiente del idioma del texto
+texto
+
+```
+
+
+Una limpieza más intensiva podría seguir con la eliminación de palabras unión `stop-words` y hasta la reducción de palabras hasta su raíz (término _stemming_ en inglés).Para este propósito hay librerías específicas en R, algunas de ellas son ??.  
+Sin embargo esta sobre-simplificación puede no ser lo más recomendado en todos los casos. Esta elección será muy dependiente del algoritmo y el tipo de plagio buscado (ya hemos comentado previamente que hay diferentes tipos de "plagio" a detectar).
+
+```{r}
+#eliminar stop-words tenemos varias opciones, dependiendo del paquete usado
+#librería tm
+
+library(tm)
+
+texto2<-removeWords(texto,stopwords("es"))
+texto2<-str_trim(stripWhitespace(texto2))
+texto2
+
+#librería tidytext
+
+
+
+#libreria qdap
+
+
+
+```
+
+```{r}
+#stemming palabras con la libreria tm
+texto2<-unlist(str_split(texto2," "))
+texto3<-stemDocument(texto2,language = "es")
+texto4<-stemCompletion(texto3,texto2)
+```
+
+
+
+
 ## Tokenizado
+
+Una vez importado el corpus y depurado los datos, el siguiente paso es tokemizarlos. Esto consiste en separar en elementos más pequeños el conjunto de datos que tenemos. Hablando de datos de tipo texo, tokemizar podría ser separar en palabras o en frases por ejemplo. La función `strsplit()` nos permitiría hacer variando el argumento de separación, `split`  según nos convenga.
+
+  - `split=" "` un espacio podría servir para separar en palabras. 
+  - `split="."` un punto podría servir para separar en frases. 
+
+Sin embargo, en este caso nos va a interesar usar N-gramas, que son subconjuntos del conjunto original que van cogiendo combinaciones de n elementos y dónde el elemento siguiente está formado por los (n-1) elementos del anterior más un elemento nuevo. Por ejemplo, si tenemos el texto: "Hoy hemos quedado en la rusa a las seis". Su división en 3-gramas (o trigramas) sería: 
+
+[Hoy hemos quedado], [hemos quedado en], [quedado en la], [en la rusa],[la rusa a], [rusa a las],[a las seis]. 
+
+En R, se puede hacer fácilmente usando el paquete `ngram`, y más concretamente la función `unnest_tokens()`, que toma como argumentos principales los siguientes: 
+
+  - `tbl` un data frame
+  - `output` el nombre de la columna que se va  crear
+  - `input` los datos que queremos usar.
+  - `token` a qué token queremos convertirlos (en este caso el que más nos interesa es "ngrams")
+  - `n` argumento adicional para n-gramas para indicar el tamaño de éstos.
+  
+Los N-gramas son muy utilizados en aplicaciones de análisis de texto, como por ejemplo en la detección de plagio. La similitud entre dos textos se puede calcular contando el número de N-gramas que tienen en común.
+
+
 ## Metricas y modelos
 
 Las métricas y modelos utilizados a la hora de evaluar los niveles de plagio entre textos, ya sean del mismo autor, o de varios, se deben dividir en varios grupos, dependiendo de la previa tokenización o agrupación de las palabras o letras del corpus.

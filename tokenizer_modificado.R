@@ -10,9 +10,9 @@ agrupa <-function(text){
   temp <-unlist(text)
   temptemp <- temp[temp != ""]
   
-  temp2 <- temp[[1]]
+  temp2 <- temp[1]
   for(i in 2:length(temp)){
-    temp2 <- paste(temp2,temp[[i]])
+    temp2 <- paste(temp2,temp[i])
   }
   temp2 <- gsub('[[:punct:] ]+',' ',temp2)%>%
     tolower()
@@ -27,6 +27,7 @@ agrupa <-function(text){
 compara <- function(original, sospechoso){
   
   coinc <- c()
+  coinc2 <- c()
   
   or <- tibble(trigram = unlist(original))
   sus <- tibble(trigram = unlist(unlist(sospechoso)))
@@ -36,22 +37,26 @@ compara <- function(original, sospechoso){
   
   for( i in 1:length(sus$P1)){#aquí es donde hay que poner un modelo de verdad, una distancia o métrica
     count <- 0;
+    count2 <- 0
     sus_str <- c(sus[i,]$P1,sus[i,]$P2,sus[i,]$P3)
     
     for( j in 1:length(or$P1)){
       or_str <- c(or[j,]$P1,or[j,]$P2,or[j,]$P3)
       count <- count + all(or_str == sus_str)
+      count2 <- count2 + sum(or_str==sus_str)
     }
     
-    coinc <- append(coinc,count)#simplemente un vector con el número de veces que se ha repetido cada palabra del ngrama
-    c <- sum(coinc)/length(sus$P1)
+    coinc <- append(coinc,count)     #simplemente un vector con el número de veces que se ha repetido cada palabra del ngrama
+    coinc2 <- append(coinc2,count2)
+    score <- sum(coinc)/length(sus$P1)
+    salida <- c(score,coinc2)
   }
-  return(c)
+  return(salida)
 }
 
 #### Limpieza de los datos ####
 load(file = "corpus_as_dataframe.Rda")
-Ta <- corpus[corpus$Task=="a" & (corpus$Category=="original"|corpus$Category=="cut"),]
+Ta <- corpus[corpus$Task=="a",]
 
 
 #La columna texto ahora está en forma de ngramas
@@ -59,12 +64,16 @@ Ta$Text <- lapply(Ta$Text,FUN = agrupa)
 
 
 #### comparamos Ngrams ###
-Original <- unlist(Ta$Text[5])
-Ta$Coincount <- lapply(Ta$Text,FUN = compara,original = Original)#obtenemos lista con número de concidenca por ngrama
+Original <- unlist(Ta$Text[20])
+aux <- lapply(Ta$Text,FUN = compara,original = Original) #obtenemos lista con número de concidenca por ngrama
+for (i in 1:length(Ta$Text)){
+  Ta$score[i] <- aux[[i]][1]
+  Ta$Coincount[i] <- list(aux[[i]][2: length(aux[[i]])])
+}
 View(Ta)
 
 # visualizamos pasando los vectores de coincidencias a matrices y haciendo heatmap
-Ta$Ccmatrix <- lapply(Ta$Coincount, matrix, ncol = 5)
+Ta$Ccmatrix <- lapply(Ta$Coincount, matrix, ncol = 20)
 
 sapply(Ta$Ccmatrix,heatmap)
-heatmap(Ta$Ccmatrix[[2]])
+heatmap(Ta$Ccmatrix[[2]],Rowv=NA,Colv=NA)

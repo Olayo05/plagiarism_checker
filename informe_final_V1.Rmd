@@ -22,8 +22,10 @@ En este apartado desarrollamos los conceptos y técnicas necesarias para llevar 
 
 ?? poner una clasificacion de los tipos de detectore de plagio o algo...
 
+## Corpus
+El corpus es blablablalbalbalba
 
-
+Para este trabajo hemos  descargado un set de preguntas de blablalbalblabla
 ## Preprocesado   
 
 

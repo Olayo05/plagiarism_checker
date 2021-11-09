@@ -1,0 +1,70 @@
+#Miguel Hortelano 2/11/2021#
+library(tidyr)
+library(tidytext)
+library(dplyr)
+library(ngram)
+
+#### funciones ####
+# Devuelve el texto introducido en forma de lista de Ngramas 
+agrupa <-function(text){
+  temp <-unlist(text)
+  temptemp <- temp[temp != ""]
+  
+  temp2 <- temp[[1]]
+  for(i in 2:length(temp)){
+    temp2 <- paste(temp2,temp[[i]])
+  }
+  temp2 <- gsub('[[:punct:] ]+',' ',temp2)%>%
+    tolower()
+  #%>%
+  #  strsplit(split="\\s")
+  
+  temp <- tibble(word = unlist(temp2))%>%
+    unnest_tokens(trigram, word,token = "ngrams",n=3)#cambiar el número para tamaño del ngrama
+}
+
+# Cuenta las veces que se repiten las palabras entre dos textos
+compara <- function(original, sospechoso){
+  
+  coinc <- c()
+  
+  or <- tibble(trigram = unlist(original))
+  sus <- tibble(trigram = unlist(unlist(sospechoso)))
+  
+  sus <- separate(sus,trigram,c("P1","P2","P3"),sep=" ")
+  or <- separate(or,trigram,c("P1","P2","P3"),sep=" ")
+  
+  for( i in 1:length(sus$P1)){#aquí es donde hay que poner un modelo de verdad, una distancia o métrica
+    count <- 0;
+    sus_str <- c(sus[i,]$P1,sus[i,]$P2,sus[i,]$P3)
+    
+    for( j in 1:length(or$P1)){
+      or_str <- c(or[j,]$P1,or[j,]$P2,or[j,]$P3)
+      count <- count + all(or_str == sus_str)
+    }
+    
+    coinc <- append(coinc,count)#simplemente un vector con el número de veces que se ha repetido cada palabra del ngrama
+    c <- sum(coinc)/length(sus$P1)
+  }
+  return(c)
+}
+
+#### Limpieza de los datos ####
+load(file = "corpus_as_dataframe.Rda")
+Ta <- corpus[corpus$Task=="a" & (corpus$Category=="original"|corpus$Category=="cut"),]
+
+
+#La columna texto ahora está en forma de ngramas
+Ta$Text <- lapply(Ta$Text,FUN = agrupa)
+
+
+#### comparamos Ngrams ###
+Original <- unlist(Ta$Text[5])
+Ta$Coincount <- lapply(Ta$Text,FUN = compara,original = Original)#obtenemos lista con número de concidenca por ngrama
+View(Ta)
+
+# visualizamos pasando los vectores de coincidencias a matrices y haciendo heatmap
+Ta$Ccmatrix <- lapply(Ta$Coincount, matrix, ncol = 5)
+
+sapply(Ta$Ccmatrix,heatmap)
+heatmap(Ta$Ccmatrix[[2]])

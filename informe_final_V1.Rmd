@@ -1,6 +1,7 @@
 ---
 title: "Trabajo Plagio Master"
 output: html_document
+bibliography: bibliography.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -25,7 +26,7 @@ En este apartado desarrollamos los conceptos y técnicas necesarias para llevar 
 ## Corpus
 El corpus es blablablalbalbalba
 
-Para este trabajo hemos  descargado un set de preguntas de blablalbalblabla
+Para este trabajo hemos  descargado un set de preguntas de blablalbalblabla [@corpus_source]
 ## Preprocesado   
 
 
